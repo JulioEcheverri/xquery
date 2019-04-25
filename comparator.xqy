@@ -1,15 +1,23 @@
-declare function local:path-to-node( $nodes as node()* )  as xs:string* 
+(: Author: Julio César Echeverri Marulanda
+   email: julio.marulanda@outlook.com
+   Copyright: 2019
+   License: GNU GPLv3
+:)
+
+module namespace comparator = "comparator";
+
+declare function comparator:path-to-node( $nodes as node()* )  as xs:string* 
 {
     $nodes/string-join(ancestor-or-self::*/name(.), '/')
 };
 
-declare function local:number-of-children($element as node()?) as xs:integer
+declare function comparator:number-of-children($element as node()?) as xs:integer
 {
     let $childrenNumber := fn:count($element/*)
     return $childrenNumber
 };
 
-declare function local:has-children($element as node()?) as xs:boolean
+declare function comparator:has-children($element as node()?) as xs:boolean
 {
     let $hasChildren := if(fn:count($element/*) > 0)
                         then(fn:true())
@@ -17,32 +25,32 @@ declare function local:has-children($element as node()?) as xs:boolean
     return $hasChildren
 };
 
-declare function local:node-compare($node1 as node()?, $node2 as node()?) as element()*
+declare function comparator:node-compare($nodeA as node()?, $nodeB as node()?) as element()*
 {
-	if(local:has-children($node1) and local:has-children($node2))then(
-		let $nhijos_1 := local:number-of-children($node1)
-		let $nhijos_2 := local:number-of-children($node2)
+	if(comparator:has-children($nodeA) and comparator:has-children($nodeB))then(
+		let $nhijos_1 := comparator:number-of-children($nodeA)
+		let $nhijos_2 := comparator:number-of-children($nodeB)
 		return 
 			if($nhijos_1 = $nhijos_2)then(
-				for $hijo_node1 at $i in $node1/*
-					return local:node-compare($hijo_node1, $node2/*[$i])
-			)else($node1)
+				for $hijo_nodeA at $i in $nodeA/*
+					return comparator:node-compare($hijo_nodeA, $nodeB/*[$i])
+			)else($nodeA)
 	)else(
-		let $equals := if(fn:name($node1) != fn:name($node2) or $node1/text() != $node2/text()) then(
-            $node1
+		let $comparision := if(fn:name($nodeA) != fn:name($nodeB) or $nodeA/text() != $nodeB/text()) then(
+            $nodeA
         )else()
-        return $equals
+        return $comparision
 	)
 };
 
-declare function local:node-compare-with-path($node1 as node()?, $node2 as node()?) as element()*
+declare function comparator:node-compare-with-path($nodeA as node()?, $nodeB as node()?) as element()*
 {
-    let $foundNodes := local:node-compare($node1, $node2)
+    let $foundNodes := comparator:node-compare($nodeA, $nodeB)
     return <results>{
                 for $node in $foundNodes
                     return <result>
                                 <node>{$node}</node>
-                                <path>{local:path-to-node($node)}</path>
+                                <path>{comparator:path-to-node($node)}</path>
                            </result>
            }</results>
 };
@@ -51,6 +59,11 @@ declare function local:node-compare-with-path($node1 as node()?, $node2 as node(
 
 (::::::::::::::::::::::::::::::::HOW TO USE::::::::::::::::::::::::::::::::::::::)
 
-let $xml1 := doc('invResponse1.xml')
-let $xml2 := doc('invResponse2.xml')
-return local:node-compare-with-path($xml1/*, $xml2/*)
+(: 
+let $xml_document_1 := doc('xml_document_1.xml')
+let $xml_document_2 := doc('xml_document_2.xml')
+
+return comp:node-compare-with-path($xml_document_1/*, $xml_document_2/*) 
+or
+return comp:node-compare($xml_document_1/*, $xml_document_2/*)
+:)
